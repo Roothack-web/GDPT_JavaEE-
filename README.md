@@ -23,5 +23,5 @@
 3. 访问：http://localhost:8080
 
 ## 默认账户
-- 管理员：admin/password123
-- 普通用户：user/password123
+- 管理员：admin/admin123
+- 普通用户：test/test123
