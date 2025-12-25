@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.ordersystem.mapper.ProductMapper">
+    
+    <sql id="baseColumns">
+        id, product_name, product_code, description, price, stock, 
+        status, category, image_url, create_time, update_time,
+        create_by, update_by, is_deleted
+    </sql>
+    
+    <select id="findAll" parameterType="map" resultType="com.example.ordersystem.entity.Product">
+        SELECT 
+        <include refid="baseColumns"/>
+        FROM product
+        WHERE is_deleted = 0
+        <if test="productName != null and productName != ''">
+            AND product_name LIKE CONCAT('%', #{productName}, '%')
+        </if>
+        <if test="productCode != null and productCode != ''">
+            AND product_code = #{productCode}
+        </if>
+        <if test="category != null and category != ''">
+            AND category = #{category}
+        </if>
+        <if test="status != null">
+            AND status = #{status}
+        </if>
+        <if test="minPrice != null">
+            AND price >= #{minPrice}
+        </if>
+        <if test="maxPrice != null">
+            AND price &lt;= #{maxPrice}
+        </if>
+        ORDER BY create_time DESC
+    </select>
+    
+</mapper>

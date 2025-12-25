@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理后台 - 商品订单系统</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .sidebar {
+            background-color: #343a40;
+            color: white;
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 250px;
+            padding-top: 20px;
+        }
+        .sidebar-header {
+            padding: 20px;
+            text-align: center;
+            border-bottom: 1px solid #4b545c;
+        }
+        .sidebar-menu {
+            list-style: none;
+            padding: 0;
+        }
+        .sidebar-menu li {
+            padding: 0;
+        }
+        .sidebar-menu a {
+            display: block;
+            padding: 12px 20px;
+            color: #adb5bd;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+        .sidebar-menu a:hover {
+            background-color: #495057;
+            color: white;
+        }
+        .sidebar-menu a.active {
+            background-color: #007bff;
+            color: white;
+        }
+        .main-content {
+            margin-left: 250px;
+            padding: 20px;
+        }
+        .admin-card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+        }
+        .admin-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.2);
+        }
+        .stats-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #007bff;
+        }
+        .product-image {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+<!-- 侧边栏 -->
+<div class="sidebar">
+    <div class="sidebar-header">
+        <h4><i class="fas fa-shopping-cart me-2"></i>管理后台</h4>
+    </div>
+    <ul class="sidebar-menu">
+        <li><a href="/admin" class="active">
+            <i class="fas fa-tachometer-alt me-2"></i>仪表板
+        </a></li>
+        <li><a href="#" onclick="loadProducts()">
+            <i class="fas fa-box-open me-2"></i>商品管理
+        </a></li>
+        <li><a href="#" onclick="loadOrders()">
+            <i class="fas fa-receipt me-2"></i>订单管理
+        </a></li>
+        <li><a href="/ai">
+            <i class="fas fa-robot me-2"></i>AI分析
+        </a></li>
+        <li><a href="/">
+            <i class="fas fa-home me-2"></i>返回首页
+        </a></li>
+    </ul>
+</div>
+
+<!-- 主内容区 -->
+<div class="main-content">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>管理仪表板</h1>
+        <div>
+            <span class="me-3" sec:authentication="name"></span>
+            <form th:action="@{/logout}" method="post" class="d-inline">
+                <button type="submit" class="btn btn-outline-danger btn-sm">
+                    <i class="fas fa-sign-out-alt me-1"></i>退出
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 统计卡片 -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card admin-card">
+                <div class="card-body text-center">
+                    <div class="stats-number" id="productCount">0</div>
+                    <p class="card-text">商品总数</p>
+                    <i class="fas fa-box-open fa-2x text-primary"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card admin-card">
+                <div class="card-body text-center">
+                    <div class="stats-number" id="orderCount">0</div>
+                    <p class="card-text">订单总数</p>
+                    <i class="fas fa-receipt fa-2x text-success"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card admin-card">
+                <div class="card-body text-center">
+                    <div class="stats-number" id="pendingOrders">0</div>
+                    <p class="card-text">待处理订单</p>
+                    <i class="fas fa-clock fa-2x text-warning"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card admin-card">
+                <div class="card-body text-center">
+                    <div class="stats-number" id="totalSales">0</div>
+                    <p class="card-text">总销售额</p>
+                    <i class="fas fa-yen-sign fa-2x text-danger"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 功能区域 -->
+    <div id="adminContent">
+        <div class="card admin-card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>系统概览</h5>
+            </div>
+            <div class="card-body">
+                <p>欢迎使用商品订单系统管理后台！</p>
+                <p>您可以通过侧边栏菜单管理系统的各个功能：</p>
+                <ul>
+                    <li><strong>商品管理</strong>：添加、编辑、删除商品信息</li>
+                    <li><strong>订单管理</strong>：查看和处理用户订单</li>
+                    <li><strong>AI分析</strong>：使用DeepSeek AI进行智能分析</li>
+                </ul>
+                <div class="alert alert-info">
+                    <i class="fas fa-lightbulb me-2"></i>
+                    <strong>提示：</strong> 系统已集成DeepSeek AI功能，您可以体验智能推荐、数据分析等功能。
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script>
+    // ============== 通用辅助函数 ==============
+
+    // 显示加载状态
+    function showLoading(elementId, message) {
+        const element = document.getElementById(elementId);
+        if (element) {
+            element.innerHTML = `
+                    <div class="text-center p-5">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">加载中...</span>
+                        </div>
+                        <p class="mt-3">${message}</p>
+                    </div>
+                `;
+        }
+    }
+
+    // 显示错误信息
+    function showError(elementId, message) {
+        const element = document.getElementById(elementId);
+        if (element) {
+            element.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-circle me-2"></i>${message}
+                    </div>
+                `;
+        }
+    }
+
+    // 显示成功信息
+    function showSuccess(elementId, message) {
+        const element = document.getElementById(elementId);
+        if (element) {
+            element.innerHTML = `
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle me-2"></i>${message}
+                    </div>
+                `;
+        }
+    }
+
+    // ============== 商品管理功能 ==============
+
+    // 加载商品管理
+    async function loadProducts() {
+        showLoading('adminContent', '加载商品数据中...');
+
+        try {
+            const response = await axios.get('/api/products?pageNum=1&pageSize=20');
+
+            if (response.data.code === 200) {
+                const products = response.data.data;
+                renderProductTable(products);
+            } else {
+                showError('adminContent', response.data.message || '加载商品失败');
+            }
+        } catch (error) {
+            console.error('加载商品失败:', error);
+            showError('adminContent', '加载商品失败，请稍后重试');
+        }
+    }
+
+    // 渲染商品表格
+    function renderProductTable(products) {
+        let html = `
+                <div class="card admin-card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="fas fa-box-open me-2"></i>商品管理</h5>
+                        <div>
+                            <button class="btn btn-primary btn-sm me-2" onclick="showAddProductModal()">
+                                <i class="fas fa-plus me-1"></i>添加商品
+                            </button>
+                            <button class="btn btn-outline-secondary btn-sm" onclick="refreshProducts()">
+                                <i class="fas fa-sync"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+            `;
+
+        if (products && products.length > 0) {
+            html += `
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th width="80">ID</th>
+                                    <th>商品信息</th>
+                                    <th>商品编码</th>
+                                    <th width="120">价格</th>
+                                    <th width="100">库存</th>
+                                    <th width="100">状态</th>
+                                    <th width="180">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+
+            products.forEach(product => {
+                html += `
+                        <tr>
+                            <td>${product.id}</td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="me-3">
+                                        ${product.imageUrl ?
+                    `<img src="${product.imageUrl}" class="product-image" alt="${product.productName}">` :
+                    '<div class="product-image bg-light d-flex align-items-center justify-content-center"><i class="fas fa-image text-muted"></i></div>'
+                }
+                                    </div>
+                                    <div>
+                                        <div class="fw-bold">${product.productName}</div>
+                                        <small class="text-muted">${product.category || '未分类'}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>${product.productCode}</td>
+                            <td class="fw-bold text-danger">¥${product.price}</td>
+                            <td>${product.stock}</td>
+                            <td>
+                                <span class="badge ${product.status === 1 ? 'bg-success' : 'bg-secondary'}">
+                                    ${product.status === 1 ? '上架' : '下架'}
+                                </span>
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-info me-1"
+                                        onclick="uploadProductImage(${product.id})"
+                                        title="上传图片">
+                                    <i class="fas fa-image"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-warning me-1"
+                                        onclick="editProduct(${product.id})"
+                                        title="编辑">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger"
+                                        onclick="deleteProduct(${product.id})"
+                                        title="删除">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+            });
+
+            html += `
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="mt-3">
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            共 ${products.length} 个商品，点击商品图片按钮可以上传商品图片
+                        </div>
+                    </div>
+                `;
+        } else {
+            html += `
+                    <div class="text-center py-5">
+                        <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">暂无商品数据</p>
+                        <button class="btn btn-primary" onclick="showAddProductModal()">
+                            <i class="fas fa-plus me-2"></i>添加第一个商品
+                        </button>
+                    </div>
+                `;
+        }
+
+        html += `
+                    </div>
+                </div>
+            `;
+
+        document.getElementById('adminContent').innerHTML = html;
+    }
+
+    // 上传商品图片
+    function uploadProductImage(productId) {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/*';
+        input.multiple = false;
+
+        input.onchange = async function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            // 检查文件类型
+            if (!file.type.startsWith('image/')) {
+                alert('请选择图片文件');
+                return;
+            }
+
+            // 检查文件大小（限制5MB）
+            if (file.size > 5 * 1024 * 1024) {
+                alert('图片大小不能超过5MB');
+                return;
+            }
+
+            if (!confirm(`确定要为商品 ${productId} 上传图片吗？`)) {
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('productId', productId);
+
+            try {
+                const response = await axios.post('/api/products/upload-image', formData, {
+                    headers: {
+                        'Content-Type': 'multipart/form-data'
+                    }
+                });
+
+                if (response.data.code === 200) {
+                    alert('图片上传成功！');
+                    loadProducts(); // 刷新列表
+                } else {
+                    alert('上传失败: ' + response.data.message);
+                }
+            } catch (error) {
+                console.error('上传失败:', error);
+                alert('上传失败: ' + (error.response?.data?.message || error.message));
+            }
+        };
+
+        input.click();
+    }
+
+    // 刷新商品列表
+    function refreshProducts() {
+        loadProducts();
+    }
+
+    // 编辑商品
+    function editProduct(productId) {
+        alert(`编辑商品功能开发中...\n商品ID: ${productId}`);
+        // 这里可以打开编辑模态框
+    }
+
+    // 删除商品
+    async function deleteProduct(productId) {
+        if (!confirm('确定要删除这个商品吗？此操作不可恢复！')) {
+            return;
+        }
+
+        try {
+            const response = await axios.delete(`/api/products/${productId}`);
+            if (response.data.code === 200) {
+                alert('删除成功');
+                loadProducts(); // 重新加载商品列表
+            } else {
+                alert('删除失败：' + response.data.message);
+            }
+        } catch (error) {
+            console.error('删除失败:', error);
+            alert('删除失败：' + (error.response?.data?.message || error.message));
+        }
+    }
+
+    // 显示添加商品模态框（示例）
+    function showAddProductModal() {
+        alert('添加商品功能开发中...');
+        // 这里可以打开添加商品的模态框
+    }
+
+    // ============== 订单管理功能 ==============
+
+    // 加载订单管理
+    async function loadOrders() {
+        showLoading('adminContent', '加载订单数据中...');
+
+        try {
+            const response = await axios.get('/api/orders?pageNum=1&pageSize=15');
+
+            if (response.data.code === 200) {
+                const orders = response.data.data;
+                renderOrderTable(orders);
+            } else {
+                showError('adminContent', response.data.message || '加载订单失败');
+            }
+        } catch (error) {
+            console.error('加载订单失败:', error);
+            showError('adminContent', '加载订单失败，请稍后重试');
+        }
+    }
+
+    // 渲染订单表格
+    function renderOrderTable(orders) {
+        let html = `
+                <div class="card admin-card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="fas fa-receipt me-2"></i>订单管理</h5>
+                        <div>
+                            <button class="btn btn-outline-secondary btn-sm" onclick="refreshOrders()">
+                                <i class="fas fa-sync"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+            `;
+
+        if (orders && orders.length > 0) {
+            html += `
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>订单号</th>
+                                    <th width="100">用户ID</th>
+                                    <th width="120">总金额</th>
+                                    <th width="100">状态</th>
+                                    <th>收货人</th>
+                                    <th width="180">下单时间</th>
+                                    <th width="120">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+
+            orders.forEach(order => {
+                const statusMap = {
+                    0: {text: '待付款', class: 'bg-warning'},
+                    1: {text: '已付款', class: 'bg-primary'},
+                    2: {text: '已发货', class: 'bg-info'},
+                    3: {text: '已完成', class: 'bg-success'},
+                    4: {text: '已取消', class: 'bg-secondary'}
+                };
+
+                const status = statusMap[order.status] || {text: '未知', class: 'bg-dark'};
+
+                html += `
+                        <tr>
+                            <td><strong>${order.orderNo}</strong></td>
+                            <td>${order.userId}</td>
+                            <td class="fw-bold text-danger">¥${order.totalAmount}</td>
+                            <td>
+                                <span class="badge ${status.class}">${status.text}</span>
+                            </td>
+                            <td>
+                                <div>${order.receiverName}</div>
+                                <small class="text-muted">${order.receiverPhone}</small>
+                            </td>
+                            <td>${new Date(order.createTime).toLocaleString()}</td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-primary me-1"
+                                        onclick="viewOrder(${order.id})"
+                                        title="查看详情">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-success"
+                                        onclick="updateOrderStatus(${order.id})"
+                                        title="更新状态">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+            });
+
+            html += `
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="mt-3">
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            共 ${orders.length} 个订单
+                        </div>
+                    </div>
+                `;
+        } else {
+            html += `
+                    <div class="text-center py-5">
+                        <i class="fas fa-receipt fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">暂无订单数据</p>
+                    </div>
+                `;
+        }
+
+        html += `
+                    </div>
+                </div>
+            `;
+
+        document.getElementById('adminContent').innerHTML = html;
+    }
+
+    // 刷新订单列表
+    function refreshOrders() {
+        loadOrders();
+    }
+
+    // 查看订单详情
+    async function viewOrder(orderId) {
+        try {
+            const response = await axios.get(`/api/orders/${orderId}`);
+            if (response.data.code === 200) {
+                const order = response.data.data;
+                let message = `订单详情：\n`;
+                message += `订单号：${order.orderNo}\n`;
+                message += `用户ID：${order.userId}\n`;
+                message += `总金额：¥${order.totalAmount}\n`;
+                message += `状态：${order.status}\n`;
+                message += `收货人：${order.receiverName}\n`;
+                message += `电话：${order.receiverPhone}\n`;
+                message += `地址：${order.deliveryAddress}\n`;
+                message += `下单时间：${new Date(order.createTime).toLocaleString()}`;
+
+                alert(message);
+            }
+        } catch (error) {
+            console.error('获取订单详情失败:', error);
+            alert('获取订单详情失败');
+        }
+    }
+
+    // 更新订单状态
+    function updateOrderStatus(orderId) {
+        alert(`更新订单状态功能开发中...\n订单ID: ${orderId}`);
+        // 这里可以打开更新状态的模态框
+    }
+
+    // ============== 页面初始化 ==============
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // 初始化统计数据（这里需要调用对应的API）
+        loadStatistics();
+
+        // 设置侧边栏菜单点击效果
+        setupSidebarMenu();
+    });
+
+    // 加载统计数据
+    async function loadStatistics() {
+        try {
+            // 这里可以调用API获取统计数据
+            // 示例：获取商品总数
+            const productsRes = await axios.get('/api/products?pageNum=1&pageSize=1');
+            const ordersRes = await axios.get('/api/orders?pageNum=1&pageSize=1');
+
+            if (productsRes.data.code === 200) {
+                document.getElementById('productCount').textContent = productsRes.data.total || '0';
+            }
+
+            if (ordersRes.data.code === 200) {
+                document.getElementById('orderCount').textContent = ordersRes.data.total || '0';
+            }
+
+            // 其他统计数据可以根据需要添加
+            document.getElementById('pendingOrders').textContent = '--';
+            document.getElementById('totalSales').textContent = '¥--';
+
+        } catch (error) {
+            console.error('加载统计数据失败:', error);
+        }
+    }
+
+    // 设置侧边栏菜单点击效果
+    function setupSidebarMenu() {
+        const menuItems = document.querySelectorAll('.sidebar-menu a');
+        menuItems.forEach(item => {
+            item.addEventListener('click', function() {
+                // 移除所有active类
+                menuItems.forEach(i => i.classList.remove('active'));
+                // 为当前点击项添加active类
+                this.classList.add('active');
+            });
+        });
+    }
+</script>
+</body>
+</html>

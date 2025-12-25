@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity5">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>商品订单系统</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .card-hover:hover {
+            transform: translateY(-5px);
+            transition: transform 0.3s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .navbar-brand {
+            font-weight: bold;
+            font-size: 1.5rem;
+        }
+        .hero-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 100px 0;
+            margin-bottom: 50px;
+            border-radius: 15px;
+        }
+        .feature-icon {
+            font-size: 3rem;
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+        .footer {
+            background-color: #f8f9fa;
+            padding: 40px 0;
+            margin-top: 50px;
+            border-top: 1px solid #dee2e6;
+        }
+        .nav-link.active {
+            color: #667eea !important;
+            font-weight: 600;
+        }
+        .stats-card {
+            border-left: 4px solid #667eea;
+        }
+        /* 购物车徽章样式 */
+        .cart-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            font-size: 0.7rem;
+            padding: 0.15rem 0.4rem;
+        }
+    </style>
+</head>
+<body>
+<!-- 导航栏 -->
+<nav class="navbar navbar-expand-lg navbar-light bg-light shadow-sm sticky-top">
+    <div class="container">
+        <a class="navbar-brand" href="/">
+            <i class="fas fa-shopping-cart me-2"></i>商品订单系统
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item">
+                    <a class="nav-link active" href="/">首页</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/shop">购物中心</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/ai">AI分析</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/admin">管理后台</a>
+                </li>
+            </ul>
+
+            <!-- 购物车和登录状态 -->
+            <div class="d-flex align-items-center">
+                <!-- 购物车按钮 -->
+                <div sec:authorize="isAuthenticated()">
+                    <a href="/shop" class="btn btn-outline-primary position-relative me-3">
+                        <i class="fas fa-shopping-cart"></i>
+                        <span id="cartCount" class="badge bg-danger cart-badge">0</span>
+                    </a>
+                </div>
+
+                <div sec:authorize="!isAuthenticated()">
+                    <a href="/login" class="btn btn-outline-primary me-2">
+                        <i class="fas fa-sign-in-alt me-1"></i>登录
+                    </a>
+                    <a href="/register" class="btn btn-primary">
+                        <i class="fas fa-user-plus me-1"></i>注册
+                    </a>
+                </div>
+                <div sec:authorize="isAuthenticated()">
+                    <span class="navbar-text me-3">
+                        <i class="fas fa-user me-1"></i>
+                        <span sec:authentication="name"></span>
+                        <span sec:authorize="hasRole('ADMIN')" class="badge bg-danger ms-2">管理员</span>
+                    </span>
+                    <form th:action="@{/logout}" method="post" class="d-inline">
+                        <button type="submit" class="btn btn-outline-danger btn-sm">
+                            <i class="fas fa-sign-out-alt me-1"></i>退出
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- 主要内容区 -->
+<main class="container my-4" id="main-content">
+    <!-- 欢迎区域 -->
+    <div class="hero-section text-center">
+        <h1 class="display-4 fw-bold mb-4">欢迎使用商品订单系统</h1>
+        <p class="lead mb-4">基于Spring Boot + MyBatis构建的高效电商管理系统</p>
+        <div class="d-flex justify-content-center gap-3 flex-wrap">
+            <a href="/shop" class="btn btn-light btn-lg">
+                <i class="fas fa-shopping-cart me-2"></i>开始购物
+            </a>
+            <a href="/ai" class="btn btn-outline-light btn-lg">
+                <i class="fas fa-robot me-2"></i>AI分析
+            </a>
+            <a href="/admin" class="btn btn-outline-light btn-lg">
+                <i class="fas fa-cog me-2"></i>管理后台
+            </a>
+        </div>
+    </div>
+
+    <!-- 系统统计 -->
+    <div class="row mb-5" id="systemStats">
+        <div class="col-md-3 col-6 mb-3">
+            <div class="card stats-card h-100">
+                <div class="card-body text-center">
+                    <div class="feature-icon text-primary">
+                        <i class="fas fa-box"></i>
+                    </div>
+                    <h3 id="productCount" class="fw-bold">0</h3>
+                    <p class="text-muted">商品总数</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6 mb-3">
+            <div class="card stats-card h-100">
+                <div class="card-body text-center">
+                    <div class="feature-icon text-success">
+                        <i class="fas fa-receipt"></i>
+                    </div>
+                    <h3 id="orderCount" class="fw-bold">0</h3>
+                    <p class="text-muted">订单总数</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6 mb-3">
+            <div class="card stats-card h-100">
+                <div class="card-body text-center">
+                    <div class="feature-icon text-warning">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h3 id="userCount" class="fw-bold">0</h3>
+                    <p class="text-muted">用户总数</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6 mb-3">
+            <div class="card stats-card h-100">
+                <div class="card-body text-center">
+                    <div class="feature-icon text-danger">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h3 id="aiCalls" class="fw-bold">0</h3>
+                    <p class="text-muted">AI调用次数</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 特性介绍 -->
+    <div class="row mb-5">
+        <div class="col-12 mb-4">
+            <h2 class="text-center mb-4"><i class="fas fa-star me-2 text-warning"></i>核心功能</h2>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 card-hover">
+                <div class="card-body text-center">
+                    <div class="feature-icon">
+                        <i class="fas fa-shopping-cart"></i>
+                    </div>
+                    <h4 class="card-title">商品管理</h4>
+                    <p class="card-text">
+                        完整的商品生命周期管理，支持增删改查、分类管理、库存监控等功能。
+                        包含图片上传、批量操作等高级特性。
+                    </p>
+                    <ul class="text-start text-muted">
+                        <li>商品分类管理</li>
+                        <li>库存实时监控</li>
+                        <li>多条件筛选搜索</li>
+                        <li>批量导入导出</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 card-hover">
+                <div class="card-body text-center">
+                    <div class="feature-icon">
+                        <i class="fas fa-file-invoice-dollar"></i>
+                    </div>
+                    <h4 class="card-title">订单处理</h4>
+                    <p class="card-text">
+                        完整的订单工作流，从下单到售后全流程跟踪。
+                        支持多种支付方式，实时库存扣减，自动状态流转。
+                    </p>
+                    <ul class="text-start text-muted">
+                        <li>订单状态跟踪</li>
+                        <li>自动库存管理</li>
+                        <li>支付集成</li>
+                        <li>物流跟踪</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 card-hover">
+                <div class="card-body text-center">
+                    <div class="feature-icon">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <h4 class="card-title">安全可靠</h4>
+                    <p class="card-text">
+                        多层安全防护，包括用户认证、权限控制、数据加密、防止注入攻击等。
+                        确保系统稳定和数据安全。
+                    </p>
+                    <ul class="text-start text-muted">
+                        <li>RBAC权限控制</li>
+                        <li>数据加密存储</li>
+                        <li>SQL注入防护</li>
+                        <li>操作日志审计</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI功能介绍 -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="card card-hover border-0 shadow">
+                <div class="card-header bg-gradient bg-primary text-white">
+                    <h4 class="mb-0"><i class="fas fa-robot me-2"></i>AI智能分析功能</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <div class="d-flex">
+                                <div class="me-3">
+                                    <i class="fas fa-gift fa-2x text-success"></i>
+                                </div>
+                                <div>
+                                    <h5>智能推荐</h5>
+                                    <p class="text-muted">基于用户行为和偏好，AI智能推荐最合适的商品，提升转化率。</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="d-flex">
+                                <div class="me-3">
+                                    <i class="fas fa-chart-line fa-2x text-info"></i>
+                                </div>
+                                <div>
+                                    <h5>数据分析</h5>
+                                    <p class="text-muted">深度分析销售趋势，提供数据驱动的决策建议，优化运营策略。</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="d-flex">
+                                <div class="me-3">
+                                    <i class="fas fa-comments fa-2x text-warning"></i>
+                                </div>
+                                <div>
+                                    <h5>智能客服</h5>
+                                    <p class="text-muted">7x24小时智能客服，快速解答客户问题，提升客户满意度。</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-center mt-4">
+                        <a href="/ai" class="btn btn-primary btn-lg px-5">
+                            <i class="fas fa-rocket me-2"></i>立即体验AI功能
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- 页脚 -->
+<footer class="footer">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-6">
+                <h5>商品订单系统</h5>
+                <p>基于Spring Boot的电商订单管理系统</p>
+            </div>
+            <div class="col-md-6 text-end">
+                <p>&copy; 2024 商品订单系统. All rights reserved.</p>
+                <p>版本: 1.0.0 | 集成DeepSeek AI</p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script>
+    // 页面加载完成后执行
+    document.addEventListener('DOMContentLoaded', function() {
+        // 加载系统统计数据
+        loadSystemStats();
+
+        // 设置导航栏激活状态
+        setActiveNavLink();
+
+        // 加载购物车数量（如果用户已登录）
+        loadCartCount();
+    });
+
+    // 加载系统统计数据
+    async function loadSystemStats() {
+        try {
+            // 获取商品总数
+            const productsRes = await axios.get('/api/products?pageNum=1&pageSize=1');
+            if (productsRes.data.code === 200) {
+                document.getElementById('productCount').textContent =
+                    productsRes.data.total || '0';
+            }
+        } catch (error) {
+            console.error('加载统计数据失败:', error);
+        }
+
+        // 其他统计数据先显示默认值
+        document.getElementById('orderCount').textContent = '--';
+        document.getElementById('userCount').textContent = '--';
+        document.getElementById('aiCalls').textContent = '--';
+    }
+
+    // 加载购物车数量
+    async function loadCartCount() {
+        try {
+            // 检查用户是否登录（通过Thymeleaf属性判断）
+            const isAuthenticated = document.querySelector('[sec\\:authorize="isAuthenticated()"]');
+            if (isAuthenticated) {
+                const response = await axios.get('/api/cart/count');
+                if (response.data.code === 200) {
+                    document.getElementById('cartCount').textContent = response.data.data;
+                }
+            }
+        } catch (error) {
+            console.error('加载购物车数量失败:', error);
+            // 如果未登录或其他错误，隐藏购物车徽章
+            document.getElementById('cartCount').style.display = 'none';
+        }
+    }
+
+    // 设置导航栏激活状态
+    function setActiveNavLink() {
+        const currentPath = window.location.pathname;
+        const navLinks = document.querySelectorAll('.navbar-nav .nav-link');
+
+        navLinks.forEach(link => {
+            link.classList.remove('active');
+            if (link.getAttribute('href') === currentPath) {
+                link.classList.add('active');
+            }
+        });
+    }
+</script>
+</body>
+</html>

@@ -1,0 +1,46 @@
+# 编译输出
+target/
+bin/
+build/
+out/
+
+# 依赖
+*.jar
+*.war
+*.ear
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+.settings/
+.classpath
+.project
+.DS_Store
+
+# 日志
+logs/
+*.log
+
+# 运行时文件
+uploads/
+cache/
+reports/
+
+# 配置
+.env
+application-*.properties
+
+# 数据库
+*.db
+*.sqlite
+
+# 临时文件
+*.tmp
+*.temp
+
+# 密钥文件
+*.key
+*.pem
+*.crt

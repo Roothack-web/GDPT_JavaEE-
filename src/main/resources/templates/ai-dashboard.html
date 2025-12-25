@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI智能分析 - 商品订单系统</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .ai-card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+            height: 100%;
+        }
+        .ai-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+        }
+        .ai-icon {
+            font-size: 2.5rem;
+            color: #667eea;
+            margin-bottom: 1rem;
+        }
+        .ai-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 60px 0;
+            margin-bottom: 40px;
+        }
+        .ai-result {
+            background-color: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        .ai-loading {
+            text-align: center;
+            padding: 40px;
+        }
+        .ai-suggestion {
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            background: white;
+        }
+        .ai-suggestion:hover {
+            background: #f8f9fa;
+        }
+        .confidence-badge {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-robot me-2"></i>AI智能分析
+            </a>
+            <div class="collapse navbar-collapse">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">首页</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/ai">AI仪表板</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/admin">管理后台</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- AI主区域 -->
+    <div class="ai-section">
+        <div class="container text-center">
+            <h1 class="display-4 fw-bold mb-4">AI智能分析系统</h1>
+            <p class="lead mb-4">基于DeepSeek AI的智能商品推荐、数据分析和预测系统</p>
+            <div class="row justify-content-center">
+                <div class="col-md-8">
+                    <div class="input-group input-group-lg">
+                        <input type="text" class="form-control" id="aiQuery" 
+                               placeholder="请输入您的需求，例如：'推荐适合年轻人的电子产品'">
+                        <button class="btn btn-light" onclick="handleAIQuery()">
+                            <i class="fas fa-search"></i> AI分析
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI功能卡片 -->
+    <div class="container" id="aiDashboard">
+        <div class="row g-4 mb-5">
+            <div class="col-md-4">
+                <div class="card ai-card h-100">
+                    <div class="card-body text-center">
+                        <div class="ai-icon">
+                            <i class="fas fa-shopping-cart"></i>
+                        </div>
+                        <h5 class="card-title">智能商品推荐</h5>
+                        <p class="card-text">基于用户行为和偏好，AI智能推荐最合适的商品</p>
+                        <button class="btn btn-primary" onclick="showRecommendations()">
+                            开始推荐 <i class="fas fa-arrow-right ms-2"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card ai-card h-100">
+                    <div class="card-body text-center">
+                        <div class="ai-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <h5 class="card-title">销售数据分析</h5>
+                        <p class="card-text">深度分析销售趋势，提供数据驱动的决策建议</p>
+                        <button class="btn btn-primary" onclick="showAnalysis()">
+                            开始分析 <i class="fas fa-arrow-right ms-2"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card ai-card h-100">
+                    <div class="card-body text-center">
+                        <div class="ai-icon">
+                            <i class="fas fa-robot"></i>
+                        </div>
+                        <h5 class="card-title">智能客服助手</h5>
+                        <p class="card-text">7x24小时智能客服，快速解答客户问题</p>
+                        <button class="btn btn-primary" onclick="showCustomerService()">
+                            开始咨询 <i class="fas fa-arrow-right ms-2"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI分析结果区域 -->
+        <div id="aiResults">
+            <div class="row">
+                <div class="col-12">
+                    <div class="alert alert-info">
+                        <h5><i class="fas fa-info-circle me-2"></i>欢迎使用AI智能分析系统</h5>
+                        <p>请选择上方的功能卡片开始使用AI功能，或在上方搜索框中输入您的需求。</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI功能详解 -->
+    <div class="container mt-5 mb-5">
+        <div class="row">
+            <div class="col-12">
+                <h3 class="mb-4">AI功能详解</h3>
+                <div class="accordion" id="aiFeaturesAccordion">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#feature1">
+                                <i class="fas fa-brain me-2"></i>智能推荐引擎
+                            </button>
+                        </h2>
+                        <div id="feature1" class="accordion-collapse collapse show">
+                            <div class="accordion-body">
+                                <p>我们的AI推荐系统基于以下技术：</p>
+                                <ul>
+                                    <li>协同过滤算法：分析相似用户的购买行为</li>
+                                    <li>内容推荐算法：基于商品属性和描述匹配</li>
+                                    <li>深度学习模型：预测用户兴趣和购买意向</li>
+                                    <li>实时学习：根据用户反馈不断优化推荐结果</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#feature2">
+                                <i class="fas fa-chart-line me-2"></i>预测分析
+                            </button>
+                        </h2>
+                        <div id="feature2" class="accordion-collapse collapse">
+                            <div class="accordion-body">
+                                <p>AI预测分析功能包括：</p>
+                                <ul>
+                                    <li>销售趋势预测：基于历史数据的机器学习预测</li>
+                                    <li>库存优化建议：智能补货提醒和建议</li>
+                                    <li>价格策略分析：市场竞争力分析</li>
+                                    <li>客户流失预警：提前识别潜在流失客户</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script>
+        const API_BASE = '/api';
+        
+        // 处理AI查询
+        async function handleAIQuery() {
+            const query = document.getElementById('aiQuery').value;
+            if (!query) {
+                alert('请输入查询内容');
+                return;
+            }
+            
+            showLoading('aiResults', 'AI正在分析中...');
+            
+            try {
+                // 根据查询类型路由到不同功能
+                if (query.includes('推荐') || query.includes('建议') || query.includes('买什么')) {
+                    document.getElementById('aiResults').innerHTML = `
+                        <div class="card ai-card">
+                            <div class="card-header">
+                                <h5><i class="fas fa-robot me-2"></i>AI分析结果</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="ai-suggestion">
+                                    <h6>智能推荐：</h6>
+                                    <p>基于您的查询"${query}"，建议您：</p>
+                                    <ol>
+                                        <li>使用左侧的"智能商品推荐"功能获取个性化推荐</li>
+                                        <li>明确您的需求，如价格范围、商品类型等</li>
+                                        <li>提供更多上下文信息以获得更准确的推荐</li>
+                                    </ol>
+                                    <small class="text-muted">
+                                        <i class="fas fa-clock me-1"></i> ${new Date().toLocaleString()}
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    const response = await axios.post(`${API_BASE}/ai/direct`, {
+                        prompt: `用户查询：${query}\n\n请作为电商AI助手回答这个问题。`
+                    });
+                    
+                    document.getElementById('aiResults').innerHTML = `
+                        <div class="card ai-card">
+                            <div class="card-header">
+                                <h5><i class="fas fa-robot me-2"></i>AI分析结果</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="ai-suggestion">
+                                    <h6>AI回答：</h6>
+                                    <p>${formatAIResponse(response.data.data)}</p>
+                                    <small class="text-muted">
+                                        <i class="fas fa-clock me-1"></i> ${new Date().toLocaleString()}
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('AI查询失败:', error);
+                showError('aiResults', 'AI查询失败，请稍后重试');
+            }
+        }
+        
+        // 显示推荐功能
+        function showRecommendations() {
+            document.getElementById('aiResults').innerHTML = `
+                <div class="card ai-card">
+                    <div class="card-header bg-primary text-white">
+                        <h5><i class="fas fa-gift me-2"></i>智能商品推荐</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-4">
+                            <label class="form-label">请输入您的需求：</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="recommendationQuery" 
+                                       placeholder="例如：需要一款性价比高的手机">
+                                <button class="btn btn-primary" onclick="getRecommendations()">
+                                    <i class="fas fa-magic me-2"></i>AI推荐
+                                </button>
+                            </div>
+                        </div>
+                        <div id="recommendationResults" class="ai-result">
+                            <p class="text-muted">请输入需求获取AI推荐...</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // 获取推荐
+        async function getRecommendations() {
+            const query = document.getElementById('recommendationQuery').value;
+            if (!query) {
+                alert('请输入推荐需求');
+                return;
+            }
+            
+            showLoading('recommendationResults', 'AI正在为您推荐商品...');
+            
+            try {
+                const response = await axios.get(`${API_BASE}/ai/recommend/products?query=${encodeURIComponent(query)}`);
+                
+                if (response.data.code === 200 && response.data.data) {
+                    const recommendations = response.data.data;
+                    let html = `
+                        <div class="row">
+                            <div class="col-12">
+                                <h6>基于"${query}"的推荐结果：</h6>
+                            </div>
+                    `;
+                    
+                    recommendations.forEach((rec, index) => {
+                        const product = rec.product;
+                        html += `
+                            <div class="col-md-6">
+                                <div class="ai-suggestion">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <h6>${index + 1}. ${product.productName}</h6>
+                                            <p class="mb-1">${rec.recommendationReason || '智能推荐'}</p>
+                                            <p class="mb-1"><strong>价格：</strong>¥${product.price}</p>
+                                            <p class="mb-1"><strong>库存：</strong>${product.stock}件</p>
+                                            <span class="badge bg-success">匹配度：${Math.round(rec.matchScore * 100)}%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    html += `</div>`;
+                    document.getElementById('recommendationResults').innerHTML = html;
+                } else {
+                    document.getElementById('recommendationResults').innerHTML = `
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>${response.data.message || '暂无推荐结果'}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('获取推荐失败:', error);
+                showError('recommendationResults', '推荐失败，请稍后重试');
+            }
+        }
+        
+        // 显示分析功能
+        function showAnalysis() {
+            document.getElementById('aiResults').innerHTML = `
+                <div class="card ai-card">
+                    <div class="card-header bg-success text-white">
+                        <h5><i class="fas fa-chart-bar me-2"></i>销售数据分析</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-4">
+                            <div class="col-md-4">
+                                <label class="form-label">开始日期：</label>
+                                <input type="date" class="form-control" id="startDate">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">结束日期：</label>
+                                <input type="date" class="form-control" id="endDate">
+                            </div>
+                            <div class="col-md-4 d-flex align-items-end">
+                                <button class="btn btn-success w-100" onclick="analyzeOrders()">
+                                    <i class="fas fa-chart-pie me-2"></i>分析数据
+                                </button>
+                            </div>
+                        </div>
+                        <div id="analysisResults" class="ai-result">
+                            <p class="text-muted">请选择日期范围进行分析...</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // 设置默认日期
+            const today = new Date();
+            const lastMonth = new Date();
+            lastMonth.setMonth(lastMonth.getMonth() - 1);
+            
+            document.getElementById('startDate').value = formatDate(lastMonth);
+            document.getElementById('endDate').value = formatDate(today);
+        }
+        
+        // 分析订单数据
+        async function analyzeOrders() {
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            
+            if (!startDate || !endDate) {
+                alert('请选择日期范围');
+                return;
+            }
+            
+            showLoading('analysisResults', 'AI正在分析订单数据...');
+            
+            try {
+                const response = await axios.get(
+                    `${API_BASE}/ai/analysis/orders?startDate=${startDate}&endDate=${endDate}`
+                );
+                
+                if (response.data.code === 200 && response.data.data) {
+                    const analysis = response.data.data;
+                    document.getElementById('analysisResults').innerHTML = `
+                        <div class="ai-suggestion">
+                            <h6>分析报告 ${startDate} 至 ${endDate}</h6>
+                            <div class="mb-3">
+                                <span class="badge bg-primary me-2">订单总数: ${analysis.orderCount || 0}</span>
+                                <span class="badge bg-success me-2">总销售额: ¥${analysis.totalAmount || 0}</span>
+                            </div>
+                            <div class="analysis-content">
+                                ${formatAIResponse(analysis.analysis || '暂无分析结果')}
+                            </div>
+                            <small class="text-muted d-block mt-2">
+                                <i class="fas fa-calendar me-1"></i> 分析时间：${new Date(analysis.analysisDate).toLocaleString()}
+                            </small>
+                        </div>
+                    `;
+                } else {
+                    showError('analysisResults', response.data.message || '分析失败');
+                }
+            } catch (error) {
+                console.error('分析失败:', error);
+                showError('analysisResults', '分析失败，请稍后重试');
+            }
+        }
+        
+        // 显示客服功能
+        function showCustomerService() {
+            document.getElementById('aiResults').innerHTML = `
+                <div class="card ai-card">
+                    <div class="card-header bg-info text-white">
+                        <h5><i class="fas fa-comments me-2"></i>智能客服助手</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-4">
+                            <label class="form-label">请输入您的问题：</label>
+                            <div class="input-group">
+                                <textarea class="form-control" id="customerQuestion" 
+                                          rows="3" placeholder="例如：我的订单什么时候发货？"></textarea>
+                            </div>
+                        </div>
+                        <button class="btn btn-info mb-4" onclick="getCustomerServiceResponse()">
+                            <i class="fas fa-paper-plane me-2"></i>发送问题
+                        </button>
+                        <div id="customerServiceResults" class="ai-result">
+                            <p class="text-muted">请输入您的问题获取AI回复...</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // 获取客服回复
+        async function getCustomerServiceResponse() {
+            const question = document.getElementById('customerQuestion').value;
+            if (!question) {
+                alert('请输入问题内容');
+                return;
+            }
+            
+            showLoading('customerServiceResults', 'AI正在为您生成回复...');
+            
+            try {
+                const response = await axios.post(`${API_BASE}/ai/customer-service/response`, {
+                    question: question,
+                    context: ''
+                });
+                
+                if (response.data.code === 200 && response.data.data) {
+                    const aiResponse = response.data.data;
+                    document.getElementById('customerServiceResults').innerHTML = `
+                        <div class="ai-suggestion">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6><i class="fas fa-user-circle me-2"></i>用户问题</h6>
+                                    <p class="mb-3">${question}</p>
+                                    
+                                    <h6><i class="fas fa-robot me-2"></i>AI客服回复</h6>
+                                    <p>${formatAIResponse(aiResponse.response || '暂无回复')}</p>
+                                    
+                                    <div class="mt-3">
+                                        <span class="confidence-badge">
+                                            <i class="fas fa-check-circle me-1"></i> 置信度: ${Math.round(aiResponse.confidence * 100)}%
+                                        </span>
+                                        <small class="text-muted ms-3">
+                                            <i class="fas fa-clock me-1"></i> ${new Date(aiResponse.generatedAt).toLocaleString()}
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    showError('customerServiceResults', response.data.message || '获取回复失败');
+                }
+            } catch (error) {
+                console.error('客服回复失败:', error);
+                showError('customerServiceResults', '客服回复失败，请稍后重试');
+            }
+        }
+        
+        // 辅助函数
+        function showLoading(elementId, message) {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.innerHTML = `
+                    <div class="ai-loading">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">加载中...</span>
+                        </div>
+                        <p class="mt-3">${message}</p>
+                    </div>
+                `;
+            }
+        }
+        
+        function showError(elementId, message) {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-circle me-2"></i>${message}
+                    </div>
+                `;
+            }
+        }
+        
+        function formatAIResponse(response) {
+            return response
+                .replace(/\n/g, '<br>')
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.*?)\*/g, '<em>$1</em>');
+        }
+        
+        function formatDate(date) {
+            return date.toISOString().split('T')[0];
+        }
+    </script>
+</body>
+</html>
